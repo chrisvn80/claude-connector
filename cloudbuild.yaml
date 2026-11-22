@@ -1,0 +1,18 @@
+# Auto-deploy on push to main (Cloud Build trigger). Mirrors deploy/deploy.sh.
+substitutions:
+  _REGION: us-east1
+  _SERVICE: claude-connector
+  _REPO: claude-connector
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA", "."]
+  - name: gcr.io/cloud-builders/docker
+    args: ["push", "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA"]
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    # Only swaps the image; env vars and secrets set by deploy/deploy.sh are kept.
+    args: ["run", "deploy", "${_SERVICE}", "--image", "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA", "--region", "${_REGION}"]
+images:
+  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA"
+options:
+  logging: CLOUD_LOGGING_ONLY
