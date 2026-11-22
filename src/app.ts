@@ -57,6 +57,7 @@ export function createApp(overrides: { google?: GoogleSignIn } = {}) {
   app.post("/mcp", bearer, express.json({ limit: "4mb" }), async (req, res) => {
     const server = buildMcpServer(cfg, accounts);
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
+    transport.onerror = (err) => console.warn(`[mcp transport] ${err.message}`);
     res.on("close", () => {
       void transport.close();
       void server.close();

@@ -253,6 +253,9 @@ export function webRouter(deps: {
     return res.redirect(302, url.toString());
   });
 
+  // Browser Back/refresh on a POST target: just return to the admin page.
+  router.get(["/admin/link/google", "/admin/link/slack", "/admin/remove", "/admin/logout"], (_req, res) => res.redirect(302, "/admin"));
+
   router.post("/admin/remove", async (req, res) => {
     if (!readSession(req) || !checkCsrf(req)) return res.redirect(302, "/admin");
     const id = String((req.body as Record<string, unknown>).id ?? "");
