@@ -1,4 +1,5 @@
-# Auto-deploy on push to main (Cloud Build trigger). Mirrors deploy/deploy.sh.
+# Auto-deploy on push to main (Cloud Build trigger, run as claude-connector-build SA).
+# Only swaps the image; env vars and secrets set by deploy/deploy.sh are kept.
 substitutions:
   _REGION: us-east1
   _SERVICE: claude-connector

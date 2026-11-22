@@ -35,8 +35,29 @@ echo "== Runtime service account"
 if ! gcloud iam service-accounts describe "$RUN_SA" >/dev/null 2>&1; then
   gcloud iam service-accounts create claude-connector-run --display-name="claude-connector runtime"
 fi
-gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:${RUN_SA}" \
-  --role=roles/datastore.user --condition=None >/dev/null
+# New service accounts take a few seconds to become visible to IAM; retry.
+for i in 1 2 3 4 5 6; do
+  if gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:${RUN_SA}" \
+      --role=roles/datastore.user --condition=None >/dev/null 2>&1; then break; fi
+  [ "$i" = 6 ] && { echo "!! Could not grant Firestore access to $RUN_SA"; exit 1; }
+  sleep 10
+done
+
+echo "== Build service account"
+if ! gcloud iam service-accounts describe "$BUILD_SA" >/dev/null 2>&1; then
+  gcloud iam service-accounts create claude-connector-build --display-name="claude-connector builds"
+fi
+for role in roles/cloudbuild.builds.builder roles/run.developer roles/logging.logWriter; do
+  for i in 1 2 3 4 5 6; do
+    if gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:${BUILD_SA}" \
+        --role="$role" --condition=None >/dev/null 2>&1; then break; fi
+    [ "$i" = 6 ] && { echo "!! Could not grant $role to $BUILD_SA"; exit 1; }
+    sleep 10
+  done
+done
+# Builds may deploy as the runtime account, and nothing else.
+gcloud iam service-accounts add-iam-policy-binding "$RUN_SA" --member="serviceAccount:${BUILD_SA}" \
+  --role=roles/iam.serviceAccountUser >/dev/null
 
 echo "== Secrets"
 if ! gcloud secrets describe cc-encryption-key >/dev/null 2>&1; then

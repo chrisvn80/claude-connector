@@ -8,7 +8,8 @@ GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-$(cat deploy/.google-client-id.local 2>/de
 TAG="${TAG:-$(git rev-parse --short HEAD 2>/dev/null || date +%s)}"
 
 gcloud config set project "$PROJECT_ID" >/dev/null
-gcloud builds submit --tag "${IMAGE}:${TAG}" .
+gcloud builds submit --config deploy/build-only.yaml --substitutions="_IMAGE=${IMAGE}:${TAG}" \
+  --service-account="projects/${PROJECT_ID}/serviceAccounts/${BUILD_SA}" .
 
 gcloud run deploy "$SERVICE" \
   --image "${IMAGE}:${TAG}" \
