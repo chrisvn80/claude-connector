@@ -21,7 +21,6 @@ gcloud run deploy "$SERVICE" \
   --set-env-vars "BASE_URL=${BASE_URL},OWNER_EMAIL=${OWNER_EMAIL},GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID},SLACK_CLIENT_ID=${SLACK_CLIENT_ID},SLACK_TEAM_ID=${SLACK_TEAM_ID},STORE_BACKEND=firestore" \
   --set-secrets "ENCRYPTION_KEY=cc-encryption-key:latest,GOOGLE_CLIENT_SECRET=cc-google-client-secret:latest,SLACK_CLIENT_SECRET=cc-slack-client-secret:latest"
 
-URL=$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')
-echo "Deployed: $URL"
-[ "$URL" = "$BASE_URL" ] || echo "!! WARNING: service URL ($URL) differs from BASE_URL ($BASE_URL). Update deploy/config.sh and redeploy."
-curl -fsS "$URL/healthz" && echo
+# Cloud Run serves both a legacy and the deterministic URL; BASE_URL is the deterministic one.
+echo "Deployed: $BASE_URL"
+curl -fsS "$BASE_URL/health" && echo

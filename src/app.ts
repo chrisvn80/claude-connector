@@ -31,7 +31,7 @@ export function createApp(overrides: { google?: GoogleSignIn } = {}) {
   app.set("trust proxy", 1); // Cloud Run sits behind one proxy hop
   app.disable("x-powered-by");
 
-  app.get("/healthz", (_req, res) => res.json({ ok: true }));
+  app.get("/health", (_req, res) => res.json({ ok: true }));
   app.get("/", (_req, res) => res.redirect(302, "/admin"));
 
   app.use(
